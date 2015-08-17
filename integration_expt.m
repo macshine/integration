@@ -33,7 +33,7 @@ end
 
 raw_fc = bsxfun(@times,permute(td,[1,3,2]),permute(td,[1,2,3]));
 
-%simple moving average of MTD
+%Simple moving average of MTD
 sma_filter = 1/7*ones(7,1);
 sma = zeros(nTime,nNodes,nNodes);
 
@@ -71,7 +71,7 @@ for t = 1:nTime
   ci_deg(:,t) = modularity_finetune_und_sign(sma(:,:,t),'sta',ci(:,t));
 end
 
-%module degree z-score
+%Module Degree Z-score
 mod_deg_z = zeros(nNodes,nTime);
 
 for t = 1:nTime
@@ -82,16 +82,7 @@ Z_avg = nanmean(mod_deg_z,2);
 Z_std = nanstd(mod_deg_z(:));
 
 
-%temporal autocorrelation
-mi_ci = zeros(nTime);
-
-for t = 1:nTime
-  for u = 1:nTime
-    [~,mi_ci(t,u)] = partition_distance(ci_deg(:,t),ci_deg(:,u));
-  end
-end
-
-%participation index
+%Participation index
 P = zeros(nNodes,nTime);
 
 for t = 1:nTime
@@ -102,9 +93,8 @@ P_avg = nanmean(P,2);
 P_std = nanstd(P(:));
 
 
-% Step 4: Cartographic Analysis
+% Step 4: Cartographic Analysis (http://www.nature.com/nature/journal/v433/n7028/full/nature03288.html)
 
-%Cartography
 Z_P1 = zeros(nNodes,nTime);
 Z_P2 = zeros(nNodes,nTime);
 Z_P3 = zeros(nNodes,nTime);
