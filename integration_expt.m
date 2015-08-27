@@ -34,7 +34,8 @@ end
 raw_fc = bsxfun(@times,permute(td,[1,3,2]),permute(td,[1,2,3]));
 
 %Simple moving average of MTD
-sma_filter = 1/7*ones(7,1);
+w = 10; % window length = 10 TRs
+sma_filter = 1/w*ones(w,1);
 sma = zeros(nTime,nNodes,nNodes);
 
 for j = 1:nNodes
