@@ -17,11 +17,11 @@ load('/path/to/file/id1.mat');
 %identify variable sizes
 [nNodes,nTime] = size(data);
 
+
 %%Step 2: Functional Connectivity
 
 %time-averaged codnnectivity matrix
 stat_avg = corr(data');
-W0 = cov(data'); % this will be used to create stationary (VAR) data
 
 %time-resolved connectivity - Multiplication of Temporal Derivatives (MTD)
 td = diff(data');
@@ -34,7 +34,7 @@ end
 raw_fc = bsxfun(@times,permute(td,[1,3,2]),permute(td,[1,2,3]));
 
 %Simple moving average of MTD
-w = 10; % window length = 10 TRs
+w = 14; % window length = 14 TRs (~10 seconds using 0.72s TR data)
 sma_filter = 1/w*ones(w,1);
 sma = zeros(nTime,nNodes,nNodes);
 
@@ -54,7 +54,6 @@ dyn_z = weight_conversion(dyn_avg,'normalize'); %normalize
 %% Step 3: Graph Theoretical Measures
 
 %Modularity
-
 ci = zeros(nNodes,nTime);
 q = zeros(nTime,1);
 
@@ -63,7 +62,6 @@ for t = 1:nTime
 end
 
 q_avg = nanmean(q);
-
 
 %Degeneracy
 ci_deg = zeros(nNodes,nTime);
@@ -106,21 +104,51 @@ Z_P7 = zeros(nNodes,nTime);
 
 for t = 1:nTime
   for j = 1:nNodes
-    if Z_ci(j,t) < 2.5 & P(j,t) < 0.05 
-      Z_P1(j,t) = 1; % ultra-peripheral nodes
-    elseif Z_ci(j,t) < 2.5 & P(j,t) >= 0.05 & P(j,t) < 0.62 
-      Z_P2(j,t) = 1; % peripheral nodes
-    elseif Z_ci(j,t) < 2.5 & P(j,t) >= 0.62 & P(j,t) < 0.8 
-      Z_P3(j,t) = 1; % connector nodes
-    elseif Z_ci(j,t) < 2.5 & P(j,t) >= 0.8
-      Z_P4(j,t) = 1; % kinless nodes
-    elseif Z_ci(j,t) >= 2.5 & P(j,t) < 0.3
-      Z_P5(j,t) = 1; % provincial hubs
-    elseif Z_ci(j,t) >= 2.5 & P(j,t) >= 0.3 & P(j,t) < 0.75
-      Z_P6(j,t) = 1; % connector hubs
-    elseif Z_ci(j,t) >= 2.5 & P(j,t) >= 0.75
-      Z_P7(j,t) = 1; % kinless hubs
+    if mod_deg_z(j,t) < 2.5 & P(j,t) < 0.05 
+      Z_combo(j,t,1) = 1; % ultra-peripheral nodes
+    elseif mod_deg_z(j,t) < 2.5 & P(j,t) >= 0.05 & P(j,t) < 0.62 
+      Z_combo(j,t,2) = 1; % peripheral nodes
+    elseif mod_deg_z(j,t) < 2.5 & P(j,t) >= 0.62 & P(j,t) < 0.8 
+      Z_combo(j,t,3) = 1; % connector nodes
+    elseif mod_deg_z(j,t) < 2.5 & P(j,t) >= 0.8
+      Z_combo(j,t,4) = 1; % kinless nodes
+    elseif mod_deg_z(j,t) >= 2.5 & P(j,t) < 0.3
+      Z_combo(j,t,5) = 1; % provincial hubs
+    elseif mod_deg_z(j,t) >= 2.5 & P(j,t) >= 0.3 & P(j,t) < 0.75
+      Z_combo(j,t,6) = 1; % connector hubs
+    elseif mod_deg_z(j,t) >= 2.5 & P(j,t) >= 0.75
+      Z_combo(j,t,7) = 1; % kinless hubs
     end
   end
+end
+
+%sum of number of regions within each window associated with each state
+Z_sum = squeeze(nansum(Z_combo,1));
+
+%group data into states
+z_state(:,1) = Z_sum(:,1)+Z_sum(:,5);
+z_state(:,2) = Z_sum(:,2)+Z_sum(:,3)+Z_sum(:,6);
+
+%normalize
+z_state_z(:,1) = (z_state(:,1) - nanmean(z_state(:,1)))/nanstd(z_state(:,1));
+z_state_z(:,2) = (z_state(:,2) - nanmean(z_state(:,2)))/nanstd(z_state(:,2));
+state1 = z_state_z(:,1)>0;
+state2 = z_state_z(:,2)>0;
+
+
+% Step 5. 2-dimensional histogram cloud
+
+xbins = [0.01:0.01:1.0]; ybins = [8.5:-.14:-5.36]; % 100 x 100 2d histogram
+  
+hist_cloud = zeros(size(xbins,2),size(ybins,2),nTime); %predefine for speed
+
+xNumBins = numel(xbins); yNumBins = numel(ybins);
+
+for t = 1:nTime
+  Xi = round(interp1(xbins, 1:xNumBins, P(:,t), 'linear', 'extrap') );
+  Yi = round(interp1(ybins, 1:yNumBins, mod_deg_z(:,t), 'linear', 'extrap') );
+  Xi = max( min(Xi,xNumBins), 1);
+  Yi = max( min(Yi,yNumBins), 1);
+  hist_cloud(:,:,t) = accumarray([Yi(:) Xi(:)], 1, [yNumBins xNumBins]);
 end
 
