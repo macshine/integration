@@ -122,6 +122,29 @@ for t = 1:nTime
   end
 end
 
+CH_fp = zeros(nNodes,nTime);
+PH_fp = zeros(nNodes,nTime);
+
+for t = 1:nTime
+	for j = 1:nNodes
+    if Z_combo_bg(j,t,5) == 1
+    	temp_mod = ci(j,t);
+      CH_fp(:,t) = ci(:,t)==temp_mod;
+    end
+  end
+end
+
+for t = 1:nTime
+  for j = 1:nNodes
+    if Z_combo_bg(j,t,4) == 1
+      temp_mod = ci(j,t);
+      PH_fp(:,t) = ci(:,t)==temp_mod;
+    end
+  end
+end
+
+
+%% Step 5. Define states
 %sum of number of regions within each window associated with each state
 Z_sum = squeeze(nansum(Z_combo,1));
 
@@ -136,7 +159,7 @@ state1 = z_state_z(:,1)>0;
 state2 = z_state_z(:,2)>0;
 
 
-% Step 5. 2-dimensional histogram cloud
+% Step 6. 2-dimensional histogram cloud
 
 xbins = [0.01:0.01:1.0]; ybins = [8.5:-.14:-5.36]; % 100 x 100 2d histogram
   
@@ -151,4 +174,7 @@ for t = 1:nTime
   Yi = max( min(Yi,yNumBins), 1);
   hist_cloud(:,:,t) = accumarray([Yi(:) Xi(:)], 1, [yNumBins xNumBins]);
 end
+
+
+
 
