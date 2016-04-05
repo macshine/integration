@@ -63,18 +63,12 @@ end
 
 q_avg = nanmean(q);
 
-%Degeneracy
-ci_deg = zeros(nNodes,nTime);
-
-for t = 1:nTime
-  ci_deg(:,t) = modularity_finetune_und_sign(sma(:,:,t),'sta',ci(:,t));
-end
 
 %Module Degree Z-score
 mod_deg_z = zeros(nNodes,nTime);
 
 for t = 1:nTime
-  mod_deg_z(:,t) = module_degree_zscore(sma(:,:,t),ci_deg(:,t),0);
+  mod_deg_z(:,t) = module_degree_zscore(sma(:,:,t),ci(:,t),0);
 end
 
 Z_avg = nanmean(mod_deg_z,2);
@@ -85,7 +79,7 @@ Z_std = nanstd(mod_deg_z(:));
 P = zeros(nNodes,nTime);
 
 for t = 1:nTime
-  P(:,t) = participation_coef_sign(sma(:,:,t),ci_deg(:,t));
+  P(:,t) = participation_coef_sign(sma(:,:,t),ci(:,t));
 end
 
 P_avg = nanmean(P,2);
@@ -94,74 +88,10 @@ P_std = nanstd(P(:));
 
 % Step 4: Cartographic Analysis (http://www.nature.com/nature/journal/v433/n7028/full/nature03288.html)
 
-Z_P1 = zeros(nNodes,nTime);
-Z_P2 = zeros(nNodes,nTime);
-Z_P3 = zeros(nNodes,nTime);
-Z_P4 = zeros(nNodes,nTime);
-Z_P5 = zeros(nNodes,nTime);
-Z_P6 = zeros(nNodes,nTime);
-Z_P7 = zeros(nNodes,nTime);
 
-for t = 1:nTime
-  for j = 1:nNodes
-    if mod_deg_z(j,t) < 2.5 & P(j,t) < 0.05 
-      Z_combo(j,t,1) = 1; % ultra-peripheral nodes
-    elseif mod_deg_z(j,t) < 2.5 & P(j,t) >= 0.05 & P(j,t) < 0.62 
-      Z_combo(j,t,2) = 1; % peripheral nodes
-    elseif mod_deg_z(j,t) < 2.5 & P(j,t) >= 0.62 & P(j,t) < 0.8 
-      Z_combo(j,t,3) = 1; % connector nodes
-    elseif mod_deg_z(j,t) < 2.5 & P(j,t) >= 0.8
-      Z_combo(j,t,4) = 1; % kinless nodes
-    elseif mod_deg_z(j,t) >= 2.5 & P(j,t) < 0.3
-      Z_combo(j,t,5) = 1; % provincial hubs
-    elseif mod_deg_z(j,t) >= 2.5 & P(j,t) >= 0.3 & P(j,t) < 0.75
-      Z_combo(j,t,6) = 1; % connector hubs
-    elseif mod_deg_z(j,t) >= 2.5 & P(j,t) >= 0.75
-      Z_combo(j,t,7) = 1; % kinless hubs
-    end
-  end
-end
+% Step 5: 2-dimensional histogram cloud
 
-CH_fp = zeros(nNodes,nTime);
-PH_fp = zeros(nNodes,nTime);
-
-for t = 1:nTime
-	for j = 1:nNodes
-    if Z_combo_bg(j,t,5) == 1
-    	temp_mod = ci(j,t);
-      CH_fp(:,t) = ci(:,t)==temp_mod;
-    end
-  end
-end
-
-for t = 1:nTime
-  for j = 1:nNodes
-    if Z_combo_bg(j,t,4) == 1
-      temp_mod = ci(j,t);
-      PH_fp(:,t) = ci(:,t)==temp_mod;
-    end
-  end
-end
-
-
-%% Step 5. Define states
-%sum of number of regions within each window associated with each state
-Z_sum = squeeze(nansum(Z_combo,1));
-
-%group data into states
-z_state(:,1) = Z_sum(:,1)+Z_sum(:,5);
-z_state(:,2) = Z_sum(:,2)+Z_sum(:,3)+Z_sum(:,6);
-
-%normalize
-z_state_z(:,1) = (z_state(:,1) - nanmean(z_state(:,1)))/nanstd(z_state(:,1));
-z_state_z(:,2) = (z_state(:,2) - nanmean(z_state(:,2)))/nanstd(z_state(:,2));
-state1 = z_state_z(:,1)>0;
-state2 = z_state_z(:,2)>0;
-
-
-% Step 6. 2-dimensional histogram cloud
-
-xbins = [0.01:0.01:1.0]; ybins = [8.5:-.14:-5.36]; % 100 x 100 2d histogram
+xbins = [0:0.01:1.0]; ybins = [5:-.1:-5]; % 100 x 100 2d histogram
   
 hist_cloud = zeros(size(xbins,2),size(ybins,2),nTime); %predefine for speed
 
@@ -175,6 +105,8 @@ for t = 1:nTime
   hist_cloud(:,:,t) = accumarray([Yi(:) Xi(:)], 1, [yNumBins xNumBins]);
 end
 
+% Step 6: K-means analysis
 
+idx = kmeans(reshape(hist_cloud,xNumBins * yNumBins,nTime),2);
 
 
