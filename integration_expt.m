@@ -18,6 +18,7 @@ load('/path/to/file/id1.mat');
 [nNodes,nTime] = size(data);
 
 
+
 %%Step 2: Functional Connectivity
 
 %time-averaged codnnectivity matrix
@@ -51,6 +52,7 @@ dyn_avg = nanmean(sma,3);
 dyn_z = weight_conversion(dyn_avg,'normalize'); %normalize
 
 
+
 %% Step 3: Graph Theoretical Measures
 
 %Modularity
@@ -58,55 +60,43 @@ ci = zeros(nNodes,nTime);
 q = zeros(nTime,1);
 
 for t = 1:nTime
-  [ci(:,t),q(t,1)] = modularity_louvain_und_sign(sma(:,:,t));
+  [ci(:,t),q(t,1)] = modularity_louvain_und_sign(sma(:,:,t)); %%this step should be run multiple times in order to obtain consensus
 end
 
-q_avg = nanmean(q);
 
-
-%Module Degree Z-score
-mod_deg_z = zeros(nNodes,nTime);
+%Module Degree Z-score (WT)
+WT = zeros(nNodes,nTime);
 
 for t = 1:nTime
-  mod_deg_z(:,t) = module_degree_zscore(sma(:,:,t),ci(:,t),0);
+  WT(:,t) = module_degree_zscore(sma(:,:,t),ci(:,t),0);
 end
 
-Z_avg = nanmean(mod_deg_z,2);
-Z_std = nanstd(mod_deg_z(:));
-
-
-%Participation index
-P = zeros(nNodes,nTime);
+%Participation index (BT)
+BT = zeros(nNodes,nTime);
 
 for t = 1:nTime
-  P(:,t) = participation_coef_sign(sma(:,:,t),ci(:,t));
+  BT(:,t) = participation_coef_sign(sma(:,:,t),ci(:,t));
 end
 
-P_avg = nanmean(P,2);
-P_std = nanstd(P(:));
 
 
-% Step 4: Cartographic Analysis (http://www.nature.com/nature/journal/v433/n7028/full/nature03288.html)
-
-
-% Step 5: 2-dimensional histogram cloud
+% Step 4: 2-dimensional Cartographic Profile (CP)
 
 xbins = [0:0.01:1.0]; ybins = [5:-.1:-5]; % 100 x 100 2d histogram
-  
-hist_cloud = zeros(size(xbins,2),size(ybins,2),nTime); %predefine for speed
-
+CP = zeros(size(xbins,2),size(ybins,2),nTime);
 xNumBins = numel(xbins); yNumBins = numel(ybins);
 
 for t = 1:nTime
-  Xi = round(interp1(xbins, 1:xNumBins, P(:,t), 'linear', 'extrap') );
-  Yi = round(interp1(ybins, 1:yNumBins, mod_deg_z(:,t), 'linear', 'extrap') );
+  Xi = round(interp1(xbins, 1:xNumBins, BT(:,t), 'linear', 'extrap') );
+  Yi = round(interp1(ybins, 1:yNumBins, WT(:,t), 'linear', 'extrap') );
   Xi = max( min(Xi,xNumBins), 1);
   Yi = max( min(Yi,yNumBins), 1);
-  hist_cloud(:,:,t) = accumarray([Yi(:) Xi(:)], 1, [yNumBins xNumBins]);
+  CP(:,:,t) = accumarray([Yi(:) Xi(:)], 1, [yNumBins xNumBins]);
 end
 
-% Step 6: K-means analysis
 
-idx = kmeans(reshape(hist_cloud,xNumBins * yNumBins,nTime),2);
+% Step 5: K-means analysis
+
+idx = kmeans(reshape(hist_cloud,xNumBins * yNumBins,nTime),2); %%also worth increasing k to determine stability of clustering
 
 
