@@ -26,7 +26,7 @@ function [ci,q,p,z,hc] = integration(data)
     ci = zeros(nodes,time); q = zeros(time,1); p = zeros(nodes,time); z = zeros(nodes,time);
 
     for t = 1:time
-        [ci(:,t),q(t,1)] = modularity_louvain_und_sign(data(:,:,t));
+        [ci(:,t),q(t,1)] = modularity_louvain_und_sign(data(:,:,t)); %%this step should be run multiple times in order to obtain consensus
         p(:,t) = participation_coef_sign(data(:,:,t),ci(:,t));
         z(:,t) = module_degree_zscore(data(:,:,t),ci(:,t));
     end
