@@ -1,4 +1,4 @@
 # integration
-Matlab code supporting 'Dynamic fluctuations in integration and segregation within the human functional connectome'.
+Matlab code supporting 'The Dynamics of Functional Brain Networks: Integrated Network States during Cognitive Task Performance'.
 
-The manuscript is currently undergoing peer review -- a pdf is available at http://arxiv.org/abs/1511.02976.
+The manuscript is has been accepted for publication at Neuron -- a pdf is currently available at https://arxiv.org/abs/1511.02976.
