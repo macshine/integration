@@ -6,7 +6,7 @@ nNodes = 120;
 nProbs = 101;
 P_out = 0:.01:1;
 P_in = 0:.01:1;
-mat_id = [1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4];
+mat_id = [1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;3;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4;4];
 
 ci = zeros(nNodes,nProbs,nProbs);
 q = zeros(nProbs,nProbs);
@@ -22,12 +22,16 @@ for x = 1:nProbs
         %%create a graph with fixed a probability of within and between
         %%module edges
         
+	mat_out = zeros(nNodes);
+	
         for j = 1:nNodes
             mat_out(j,:) = rand(1,nNodes)< P_out(1,y);
             temp = mat_id==mat_id(j,1);
-            mat_out(j,temp==1) = rand(1,31)< P_in(1,x);
+            mat_out(j,temp==1) = rand(1,30)< P_in(1,x);
         end
         
+	mat_out = double(mat_out);
+	
         %%calculate modular partition, within and between-module connectivity
         %%requires brain connectivity toolbox (https://sites.google.com/site/bctnet/)
         
