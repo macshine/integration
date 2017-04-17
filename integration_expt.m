@@ -25,30 +25,33 @@ load('/path/to/file/id1.mat');
 stat_avg = corr(data');
 
 %time-resolved connectivity - Multiplication of Temporal Derivatives (MTD)
-td = diff(data');
-data_std = std(td);
 
-for n = 1:nNodes
-  td(:,n) = td(:,n) / data_std(1,n);
-end
+%calculate temporal derivative
+td = diff(data);
 
-raw_fc = bsxfun(@times,permute(td,[1,3,2]),permute(td,[1,2,3]));
+%functional coupling score
+fc = bsxfun(@times,permute(td,[1,3,2]),permute(td,[1,2,3]));
 
-%Simple moving average of MTD
-w = 14; % window length = 14 TRs (~10 seconds using 0.72s TR data)
-sma_filter = 1/w*ones(w,1);
-sma = zeros(nTime,nNodes,nNodes);
+%simple moving average (need to define window length)
+
+window = 15;
+
+mtd_filter = 1/window*ones(window,1);
+mtd = zeros(nTime,nNodes,nNodes);
 
 for j = 1:nNodes
-  for k = 1:nNodes
-    sma(2:end,j,k) = filter(sma_filter,1,raw_fc(:,j,k));
-  end
+    for k = 1:nNodes
+        mtd(2:end,j,k) = filter(mtd_filter,1,fc(:,j,k));
+    end
 end
 
-sma = permute(sma,[2,3,1]);
+mtd(1:round(window/2),:,:) = [];
+mtd(round(nTime-window):nTime,:,:) = 0;
+mtd = permute(mtd,[2,3,1]);
+mtd(:,:,1) = mtd(:,:,2);
 
 %time-averaged connectivity matrix
-dyn_avg = nanmean(sma,3);
+dyn_avg = nanmean(mtd,3);
 dyn_z = weight_conversion(dyn_avg,'normalize'); %normalize
 
 
