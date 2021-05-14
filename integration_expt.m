@@ -100,6 +100,6 @@ end
 
 % Step 5: K-means analysis
 
-idx = kmeans(reshape(hist_cloud,xNumBins * yNumBins,nTime)',2); %%also worth increasing k to determine stability of clustering
+idx = kmeans(reshape(CP,xNumBins * yNumBins,nTime)',2); %%also worth increasing k to determine stability of clustering
 
 
